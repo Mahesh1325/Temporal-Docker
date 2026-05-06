@@ -1,0 +1,17 @@
+temporal:
+  server:
+    target: localhost:7233
+  namespace: default
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+spring:
+  application:
+    name: temporal-spring-app
+server:
+  port: 8080
