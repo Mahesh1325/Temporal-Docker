@@ -10,6 +10,9 @@ import io.temporal.workflow.WorkflowMethod;
 
 public class OrderWorkflowImp implements OrderWorkflow {
 
+    private boolean paymentDone = false;
+    private String status = "ORDER_CREATED";
+
     private final OrderActivity activity = Workflow.newActivityStub(
             OrderActivity.class,
             ActivityOptions.newBuilder()
@@ -19,8 +22,30 @@ public class OrderWorkflowImp implements OrderWorkflow {
     @WorkflowMethod
     @Override
     public String processOrder(String orderId) {
-        System.out.println(" Processing workflow for order: " + orderId);
-        return activity.validateOrder(orderId);
+
+        status = "WAITING_FOR_PAYMENT";
+
+        Workflow.await(() -> paymentDone);
+
+        status = "PAYMENT_RECEIVED";
+
+        System.out.println(" Payment Successful Order Completed");
+        
+        String result = activity.validateOrder(orderId);
+
+        status = "ORDER_COMPLETED";
+
+        return result;
+    }
+
+    @Override
+    public void paymentReceived(String paymentId){
+        this.paymentDone = true;
+    }
+
+    @Override
+    public String getStatus(){
+        return status;
     }
 
 }

@@ -9,6 +9,7 @@ import com.tasks.temporal.workflow.OrderWorkflow;
 
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
+import io.temporal.workflow.Workflow;
 
 @RestController
 @RequestMapping("/order")
@@ -26,22 +27,37 @@ public class OrderController {
 
     @GetMapping("/{id}")
     public String startOrder(@PathVariable String id) {
-        System.out.println(" Processing order request for ID: " + id);
-        try {
-            OrderWorkflow workflow = workflowClient.newWorkflowStub(
-                    OrderWorkflow.class,
-                    WorkflowOptions.newBuilder()
-                            .setTaskQueue("ORDER_TASK_QUEUE")
-                            .build());
 
-            String result = workflow.processOrder(id);
-            System.out.println(" Order processed successfully: " + result);
-            return result;
-        } catch (Exception e) {
-            System.err.println(" Error processing order: " + e.getMessage());
-            e.printStackTrace();
-            return "Error: " + e.getMessage();
-        }
+        OrderWorkflow workflow = workflowClient.newWorkflowStub(
+                OrderWorkflow.class,
+                WorkflowOptions.newBuilder()
+                        .setTaskQueue("ORDER_TASK_QUEUE")
+                        .setWorkflowId(id)
+                        .build());
+
+        WorkflowClient.start(workflow::processOrder, id);
+        return "Workflow Started for order " + id;
+
+    }
+
+    @GetMapping("/pay/{id}")
+    public String pay(@PathVariable String id) {
+        OrderWorkflow workflow = workflowClient.newWorkflowStub(
+                OrderWorkflow.class, id);
+
+                workflow.paymentReceived("PAY - " + id);
+                return "Payment sent";
+    }
+
+    @GetMapping("/status/{id}")
+    public String status(@PathVariable String id){
+        OrderWorkflow workflow = workflowClient.newWorkflowStub(
+            OrderWorkflow.class,
+             id
+    );
+
+    return workflow.getStatus();
+
     }
 
 }
